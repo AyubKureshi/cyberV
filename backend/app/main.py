@@ -139,14 +139,17 @@ def run_scan_pipeline(target_id, url):
                 if fingerprint in seen:
                     continue
 
-                if validate_vulnerability(vuln, vuln.get("response", "")):
+                is_valid = validate_vulnerability(vuln, vuln.get("response", ""))
 
-                    # 🧠 Generate AI explanation
+                # 🔥 Always generate AI if vulnerability detected OR even if unsure
+                if is_valid or vuln.get("type"):
+
                     explanation = explain_vulnerability(vuln)
                     vuln["ai_explanation"] = explanation
+                    print("AI Explanation:", explanation)
 
-                    add_vulnerability(target_id, ep, vuln)
-                    seen.add(fingerprint)
+                    if is_valid:
+                        add_vulnerability(target_id, ep, vuln)
 
             # 🔹 5. Update progress
             update_endpoint_status(target_id, ep, "completed")
@@ -190,20 +193,14 @@ def get_scan_status(target_id: str):
         "endpoints": target.get("endpoints", [])
     }
 
-
-# 🧪 TEST DB
-@app.post("/test-db")
-def test_db():
-    result = targets_collection.insert_one({
-        "url": "https://example.com",
-        "status": "pending"
-    })
-
+@app.get("/test-ai")
+def test_ai():
     return {
-        "message": "Inserted",
-        "id": str(result.inserted_id)
+        "result": explain_vulnerability({
+            "type": "SQL Injection",
+            "severity": "High"
+        })
     }
-
 
 # 🏠 ROOT
 @app.get("/")
