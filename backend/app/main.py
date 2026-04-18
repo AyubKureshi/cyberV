@@ -178,6 +178,15 @@ def start_scan(data: ScanRequest, background_tasks: BackgroundTasks):
         "target_id": target_id
     }
 
+@app.get("/scans")
+def get_all_scans():
+    scans = list(targets_collection.find().sort("_id", -1))
+
+    for scan in scans:
+        scan["_id"] = str(scan["_id"])
+
+    return scans
+
 
 # 📊 GET STATUS
 @app.get("/scan/{target_id}")
