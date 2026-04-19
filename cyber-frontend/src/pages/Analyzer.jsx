@@ -122,7 +122,7 @@ const Analyzer = () => {
       {/* RIGHT - MAIN */}
       <div className="flex-1 space-y-6">
         {/* 🔹 INPUT SECTION */}
-        <div className="bg-[#121821] border border-[#1F2937] p-4 rounded">
+        <div className="bg-[#121821] border border-[#1F2937] p-4 rounded-md shadow-sm">
           <h2 className="text-sm mb-3 text-gray-400">Target URL</h2>
 
           <div className="flex gap-2">
@@ -132,20 +132,20 @@ const Analyzer = () => {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="flex-1 bg-[#0B0F14] border border-[#1F2937] p-2 rounded outline-none focus:border-[#00FF9F]"
+              className="flex-1 bg-[#0B0F14] border border-[#1F2937] p-2 rounded outline-none focus:border-[#00FF9F] focus:ring-1 focus:ring-[#00FF9F]/30"
             />
 
             {!isScanning ? (
               <button
                 onClick={handleScan}
-                className="bg-[#00FF9F] text-black px-4 rounded text-sm cursor-pointer"
+                className="bg-[#00FF9F] text-black px-4 rounded text-sm hover:opacity-80 transition cursor-pointer"
               >
                 Scan
               </button>
             ) : (
               <button
                 onClick={handleStop}
-                className="bg-red-500 px-4 rounded text-sm cursor-pointer"
+                className="bg-red-500 text-white px-4 rounded text-sm hover:bg-red-600 transition cursor-pointer"
               >
                 Stop
               </button>
@@ -202,12 +202,14 @@ const Analyzer = () => {
         {/* 🔹 RESULTS */}
         {result && result.endpoints && (
           <div className="space-y-4">
-            <h2 className="text-sm text-gray-400">Scan Results</h2>
+            <h2 className="text-sm text-gray-400 tracking-wide uppercase">
+              Scan Results
+            </h2>
 
             {result.endpoints.map((ep, i) => (
               <div
                 key={i}
-                className="bg-[#121821] border border-[#1F2937] p-4 rounded hover:border-[#00FF9F] transition"
+                className="bg-[#121821] border border-[#1F2937] p-4 rounded-md hover:border-[#00FF9F] hover:shadow-[0_0_6px_#00FF9F20] transition-all duration-200"
               >
                 <p className="text-xs text-gray-400 mb-2">{ep.url}</p>
 
@@ -292,7 +294,7 @@ const RiskSummary = ({ endpoints }) => {
   });
 
   return (
-    <div className="bg-[#121821] border border-[#1F2937] p-4 rounded flex gap-6 text-sm">
+    <div className="bg-[#121821] border border-[#1F2937] p-4 rounded-md shadow-sm flex gap-6 text-sm">
       <div>
         <p className="text-red-400 font-semibold">{high}</p>
         <p className="text-gray-400">High</p>

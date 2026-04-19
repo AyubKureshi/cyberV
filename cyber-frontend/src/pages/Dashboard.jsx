@@ -51,19 +51,22 @@ const threatDistribution = [
 const activityFeed = [
   {
     title: "Public-facing portal rescanned",
-    detail: "Analyzer completed SSL and header verification for app.cyber.local",
+    detail:
+      "Analyzer completed SSL and header verification for app.cyber.local",
     time: "4 min ago",
     status: "Secure",
   },
   {
     title: "New subdomain intelligence added",
-    detail: "Info Gathering discovered 6 newly indexed hosts for the target scope",
+    detail:
+      "Info Gathering discovered 6 newly indexed hosts for the target scope",
     time: "19 min ago",
     status: "Review",
   },
   {
     title: "Threat posture score improved",
-    detail: "Remediation workflow closed 3 medium-risk items across production assets",
+    detail:
+      "Remediation workflow closed 3 medium-risk items across production assets",
     time: "1 hr ago",
     status: "Resolved",
   },
@@ -77,7 +80,7 @@ const analystQueue = [
 
 const Dashboard = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <section className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
         <Card className="overflow-hidden bg-linear-to-br from-slate-900 via-slate-900 to-cyan-950/60">
           <div className="relative space-y-8">
@@ -124,27 +127,29 @@ const Dashboard = () => {
             </div>
 
             <div className="relative grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {overviewMetrics.map(({ title, value, change, accent, icon: Icon }) => (
-                <div
-                  key={title}
-                  className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-px`}
-                >
-                  <div className="rounded-2xl bg-slate-950/90 p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm text-slate-400">{title}</p>
-                        <p className="mt-3 text-3xl font-semibold text-white">
-                          {value}
-                        </p>
+              {overviewMetrics.map(
+                ({ title, value, change, accent, icon: Icon }) => (
+                  <div
+                    key={title}
+                    className={`rounded-2xl border border-white/10 bg-linear-to-br ${accent} p-px`}
+                  >
+                    <div className="rounded-2xl bg-slate-950/90 p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-sm text-slate-400">{title}</p>
+                          <p className="mt-3 text-3xl font-semibold text-white">
+                            {value}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl bg-white/5 p-3 text-slate-200">
+                          <Icon className="h-5 w-5" />
+                        </div>
                       </div>
-                      <div className="rounded-2xl bg-white/5 p-3 text-slate-200">
-                        <Icon className="h-5 w-5" />
-                      </div>
+                      <p className="mt-4 text-sm text-slate-300">{change}</p>
                     </div>
-                    <p className="mt-4 text-sm text-slate-300">{change}</p>
                   </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </div>
         </Card>

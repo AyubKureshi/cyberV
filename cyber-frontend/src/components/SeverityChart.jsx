@@ -27,7 +27,7 @@ const SeverityChart = ({ endpoints }) => {
   };
 
   return (
-    <div className="bg-[#121821] border border-[#1F2937] p-4 rounded w-64">
+    <div className="bg-[#121821] border border-[#1F2937] p-4 rounded-md shadow-sm w-64">
       <p className="text-sm mb-2 text-gray-400">Severity Distribution</p>
       <Pie data={data} />
     </div>

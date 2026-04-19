@@ -16,8 +16,7 @@ try:
     client.admin.command('ping')
     print("✓ MongoDB connection established")
 except Exception as e:
-    print(f"✗ MongoDB connection failed: {e}")
-    raise
+    print("❌ MongoDB connection failed:", e)
 
 # Access database
 db = client["cybervision"]
