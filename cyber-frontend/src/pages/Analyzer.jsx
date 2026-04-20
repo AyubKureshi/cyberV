@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import API from "../api/axios";
 import { useAppContext } from "../context/AppContext";
 import SeverityChart from "../components/SeverityChart";
@@ -12,6 +13,9 @@ const Analyzer = () => {
   const [search, setSearch] = useState("");
 
   const progressRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const location = useLocation();
 
   const {
     targetId,
@@ -58,6 +62,16 @@ const Analyzer = () => {
     setStatus(scan.status);
     setProgress(scan.progress || 100);
   };
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (location.state?.url) {
+      setUrl(location.state.url);
+    }
+  }, [location.state]);
 
   // 🔄 POLLING
   useEffect(() => {
@@ -130,6 +144,7 @@ const Analyzer = () => {
               type="text"
               placeholder="https://target.com"
               value={url}
+              ref={inputRef}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={handleKeyDown}
               className="flex-1 bg-[#0B0F14] border border-[#1F2937] p-2 rounded outline-none focus:border-[#00FF9F] focus:ring-1 focus:ring-[#00FF9F]/30"
@@ -255,6 +270,18 @@ const Analyzer = () => {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {result?.report && (
+          <div className="bg-[#121821] border border-[#1F2937] p-4 rounded-md mt-6">
+            <h2 className="text-sm text-gray-400 mb-3 uppercase tracking-wide">
+              AI Security Report
+            </h2>
+
+            <pre className="text-xs text-gray-300 whitespace-pre-wrap">
+              {result.report}
+            </pre>
           </div>
         )}
       </div>

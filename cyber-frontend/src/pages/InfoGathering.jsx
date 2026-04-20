@@ -1,55 +1,68 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import { useAppContext } from "../context/AppContext";
 
 const InfoGathering = () => {
-  const [domain, setDomain] = useState("");
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+ const { infoData, setInfoData, infoUrl, setInfoUrl } = useAppContext();
+  const navigate = useNavigate();
 
-  const handleScan = async () => {
-    if (!domain) return alert("Enter a domain");
-
+  const handleFetch = async () => {
     try {
-      setLoading(true);
-
-      const res = await API.post("/info", {
-        domain: domain,
-      });
-
-      setResult(res.data);
-    } catch (error) {
-      console.error(error);
-      alert("Error scanning domain: " + error.message);
-    } finally {
-      setLoading(false);
+      const res = await API.post("/info", { url: infoUrl });
+      setInfoData(res.data);
+    } catch (err) {
+      console.error(err);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-white">
-        Domain Information Gathering
-      </h2>
+    <div className="space-y-6">
+      <div className="bg-[#121821] border border-[#1F2937] p-4 rounded-md">
+        <h2 className="text-sm text-gray-400 mb-2 uppercase">Info Gathering</h2>
 
-      <input
-        value={domain}
-        onChange={(e) => setDomain(e.target.value)}
-        placeholder="Enter domain (example.com)..."
-        className="w-full p-2 bg-gray-700 text-white rounded"
-      />
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="https://target.com"
+            value={infoUrl}
+            onChange={(e) => setInfoUrl(e.target.value)}
+            className="flex-1 bg-[#0B0F14] border border-[#1F2937] p-2 rounded outline-none"
+          />
 
-      <button
-        onClick={handleScan}
-        disabled={loading}
-        className="bg-blue-500 px-4 py-2 rounded text-white font-semibold disabled:opacity-50"
-      >
-        {loading ? "Scanning..." : "Scan"}
-      </button>
+          <button
+            onClick={handleFetch}
+            className="bg-[#00FF9F] text-black px-4 rounded text-sm"
+          >
+            Fetch
+          </button>
+        </div>
+      </div>
 
-      {result && (
-        <pre className="bg-gray-900 p-4 rounded text-green-400 overflow-auto">
-          {JSON.stringify(result, null, 2)}
-        </pre>
+      {infoData && (
+        <div className="bg-[#121821] border border-[#1F2937] p-4 rounded-md text-sm space-y-2">
+          <p>
+            <b>Domain:</b> {infoData.domain}
+          </p>
+          <p>
+            <b>Status:</b> {infoData.status_code}
+          </p>
+
+          <div>
+            <p className="text-gray-400">Headers:</p>
+            <pre className="text-xs bg-[#0B0F14] p-2 rounded overflow-auto">
+              {JSON.stringify(infoData.headers, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {infoData && (
+        <button
+          onClick={() => navigate("/analyzer", { state: { infoUrl } })}
+          className="bg-[#00FF9F] text-black px-4 py-2 rounded text-sm hover:opacity-90 transition"
+        >
+          Start Scan
+        </button>
       )}
     </div>
   );

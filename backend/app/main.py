@@ -3,6 +3,8 @@ from bson import ObjectId
 from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import requests
+
 
 # Controllers
 from app.controllers.scan_controller import (
@@ -25,6 +27,7 @@ from app.services.crawler import discover_endpoints
 from app.services.form_parser import extract_forms
 from app.services.param_discovery import discover_parameters
 from app.services.ai_explainer import explain_vulnerability
+from app.services.report_generator import generate_report
 
 # Tools
 from app.tools.nmap_scanner import run_nmap
@@ -156,6 +159,17 @@ def run_scan_pipeline(target_id, url):
             progress = int(((i + 1) / total) * 100)
             update_progress(target_id, progress)
 
+        # 🔥 Generate AI Report
+        target_data = targets_collection.find_one({"_id": ObjectId(target_id)})
+
+        report = generate_report(target_data)
+
+        # 🔥 Save report
+        targets_collection.update_one(
+            {"_id": ObjectId(target_id)},
+            {"$set": {"report": report}}
+        )
+
         # 🔹 DONE
         update_status(target_id, "completed")
 
@@ -199,8 +213,53 @@ def get_scan_status(target_id: str):
     return {
         "status": target["status"],
         "progress": target.get("progress", 0),
-        "endpoints": target.get("endpoints", [])
+        "endpoints": target.get("endpoints", []),
+        "report": target.get("report", "") 
     }
+
+@app.get("/stats")
+def get_stats():
+    scans = list(targets_collection.find())
+
+    total_scans = len(scans)
+    high = medium = low = 0
+
+    for scan in scans:
+        for ep in scan.get("endpoints", []):
+            for v in ep.get("vulnerabilities", []):
+                if v.get("severity") in ["High", "Critical"]:
+                    high += 1
+                elif v.get("severity") == "Medium":
+                    medium += 1
+                elif v.get("severity") == "Low":
+                    low += 1
+
+    return {
+        "total_scans": total_scans,
+        "high": high,
+        "medium": medium,
+        "low": low
+    }
+
+
+@app.post("/info")
+def info_gathering(data: ScanRequest):
+    url = data.url
+
+    try:
+        parsed = urlparse(url)
+        domain = parsed.netloc
+
+        res = requests.get(url, timeout=5)
+
+        return {
+            "domain": domain,
+            "status_code": res.status_code,
+            "headers": dict(res.headers),
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/test-ai")
 def test_ai():

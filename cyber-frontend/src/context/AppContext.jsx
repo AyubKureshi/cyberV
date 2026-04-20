@@ -7,6 +7,8 @@ export const AppProvider = ({ children }) => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
   const [result, setResult] = useState(null);
+  const [infoData, setInfoData] = useState(null);
+  const [infoUrl, setInfoUrl] = useState("");
 
   return (
     <AppContext.Provider
@@ -19,6 +21,10 @@ export const AppProvider = ({ children }) => {
         setStatus,
         result,
         setResult,
+        infoData,
+        setInfoData,
+        infoUrl,
+        setInfoUrl,
       }}
     >
       {children}

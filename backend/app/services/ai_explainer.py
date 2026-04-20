@@ -17,7 +17,7 @@ Give:
 - Impact
 - Fix
 
-Keep it short and simple.
+Keep it very short and simple.
 """
 
         response = client.models.generate_content(
