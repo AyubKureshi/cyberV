@@ -1,7 +1,9 @@
+import os
 from google import genai
 
-client = genai.Client(api_key="AIzaSyAsQWl43WyVaG5AlgKGBSIXCS7VYRy3ZT0")
-
+# Fetch API key from environment variables instead of hardcoding
+API_KEY = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=API_KEY)
 
 def generate_report(scan_data):
     try:
@@ -13,7 +15,6 @@ Generate a professional vulnerability scan report based on the following data:
 {scan_data}
 
 Include:
-
 1. Executive Summary
 2. Vulnerability Overview
 3. Severity Breakdown
@@ -22,7 +23,6 @@ Include:
 
 Keep it structured and professional.
 """
-
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt

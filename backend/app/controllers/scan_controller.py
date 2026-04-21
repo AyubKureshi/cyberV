@@ -1,16 +1,14 @@
 from datetime import datetime
-
 from bson import ObjectId
-
 from app.db.mongo import targets_collection
 
+CANCEL_FLAGS = {}
 
 def _ensure_db_available():
     if targets_collection is None:
         raise RuntimeError("MongoDB is not available. Start MongoDB or set MONGODB_URI.")
 
-
-# Create new scan (User Trigger -> Controller)
+# 2. Update create_target to initialize the flag
 def create_target(url: str):
     _ensure_db_available()
 
@@ -23,7 +21,18 @@ def create_target(url: str):
     }
 
     result = targets_collection.insert_one(target)
-    return str(result.inserted_id)
+    target_id = str(result.inserted_id)
+    
+    # Register this scan as active
+    CANCEL_FLAGS[target_id] = False
+    
+    return target_id
+
+# 3. Add this new function at the bottom of the file
+def stop_target(target_id: str):
+    _ensure_db_available()
+    CANCEL_FLAGS[target_id] = True
+    update_status(target_id, "stopped")
 
 
 def update_progress(target_id, progress):

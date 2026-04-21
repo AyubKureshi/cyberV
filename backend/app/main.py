@@ -14,13 +14,15 @@ from app.controllers.scan_controller import (
     update_endpoint_status,
     update_progress,
     update_status,
+    CANCEL_FLAGS,
+    stop_target,
 )
 
 # DB
 from app.db.mongo import targets_collection
 
 # Routes
-from app.routes import analyze, info
+from app.routes import analyze, info, report
 
 # Services
 from app.services.crawler import discover_endpoints
@@ -67,6 +69,7 @@ class ScanRequest(BaseModel):
 # 📡 ROUTES
 app.include_router(analyze.router, prefix="/analyze")
 app.include_router(info.router, prefix="/info")
+app.include_router(report.router, prefix="/api/report", tags=["Report"])
 
 
 # 🚀 MAIN SCAN PIPELINE
@@ -89,6 +92,15 @@ def run_scan_pipeline(target_id, url):
             nmap_results = run_nmap(domain)
 
             for vuln in nmap_results:
+                severity = vuln.get("severity", "Low")
+                
+                # 🔥 FIX: Only ask AI if it's a serious vulnerability
+                if vuln.get("type") and severity in ["Medium", "High", "Critical"]:
+                    explanation = explain_vulnerability(vuln)
+                    vuln["ai_explanation"] = explanation
+                else:
+                    vuln["ai_explanation"] = "Explanation skipped for Low severity to speed up scan."
+                    
                 add_vulnerability(target_id, url, vuln)
 
         except Exception as e:
@@ -96,6 +108,11 @@ def run_scan_pipeline(target_id, url):
 
         # 🔹 3. Scan each endpoint
         for i, ep in enumerate(endpoints):
+            if CANCEL_FLAGS.get(target_id) == True:
+                print(f"[-] Scan stopped by user for: {target_id}")
+                update_status(target_id, "stopped")
+                return # Exit the pipeline immediately
+            
             print(f"[+] Scanning: {ep}")
             update_endpoint_status(target_id, ep, "scanning")
 
@@ -141,15 +158,21 @@ def run_scan_pipeline(target_id, url):
 
                 if fingerprint in seen:
                     continue
+                    
+                seen.add(fingerprint)
 
                 is_valid = validate_vulnerability(vuln, vuln.get("response", ""))
 
-                # 🔥 Always generate AI if vulnerability detected OR even if unsure
                 if is_valid or vuln.get("type"):
-
-                    explanation = explain_vulnerability(vuln)
-                    vuln["ai_explanation"] = explanation
-                    print("AI Explanation:", explanation)
+                    severity = vuln.get("severity", "Low")
+                    
+                    # 🔥 FIX: Only ask AI for Medium, High, or Critical
+                    if severity in ["Medium", "High", "Critical"]:
+                        explanation = explain_vulnerability(vuln)
+                        vuln["ai_explanation"] = explanation
+                        print("AI Explanation generated for:", vuln.get("type"))
+                    else:
+                        vuln["ai_explanation"] = "Explanation skipped for Low severity to speed up scan."
 
                     if is_valid:
                         add_vulnerability(target_id, ep, vuln)
@@ -216,6 +239,11 @@ def get_scan_status(target_id: str):
         "endpoints": target.get("endpoints", []),
         "report": target.get("report", "") 
     }
+
+@app.post("/scan/{target_id}/stop")
+def stop_scan_endpoint(target_id: str):
+    stop_target(target_id)
+    return {"message": "Scan stopping..."}
 
 @app.get("/stats")
 def get_stats():

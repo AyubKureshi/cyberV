@@ -31,7 +31,7 @@ const InfoGathering = () => {
 
           <button
             onClick={handleFetch}
-            className="bg-[#00FF9F] text-black px-4 rounded text-sm"
+            className="bg-[#00FF9F] text-black px-4 rounded text-sm cursor-pointer"
           >
             Fetch
           </button>
@@ -59,7 +59,7 @@ const InfoGathering = () => {
       {infoData && (
         <button
           onClick={() => navigate("/analyzer", { state: { infoUrl } })}
-          className="bg-[#00FF9F] text-black px-4 py-2 rounded text-sm hover:opacity-90 transition"
+          className="bg-[#00FF9F] text-black px-4 py-2 rounded text-sm hover:opacity-90 transition cursor-pointer"
         >
           Start Scan
         </button>

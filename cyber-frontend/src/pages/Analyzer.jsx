@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import API from "../api/axios";
+import { jsPDF } from "jspdf";
 import { useAppContext } from "../context/AppContext";
 import SeverityChart from "../components/SeverityChart";
 import ScanHistory from "../components/ScanHistory";
+import ReportViewer from "../components/ReportViewer";
 
 const Analyzer = () => {
   const [url, setUrl] = useState("");
@@ -11,6 +13,7 @@ const Analyzer = () => {
   const [isSticky, setIsSticky] = useState(false);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   const progressRef = useRef(null);
   const inputRef = useRef(null);
@@ -47,9 +50,18 @@ const Analyzer = () => {
   };
 
   // 🛑 STOP SCAN
-  const handleStop = () => {
+  const handleStop = async () => {
     setIsScanning(false);
     setStatus("stopped");
+
+    // Tell the backend to kill the process
+    if (targetId) {
+      try {
+        await API.post(`/scan/${targetId}/stop`);
+      } catch (err) {
+        console.error("Error stopping scan:", err);
+      }
+    }
   };
 
   // ⌨️ ENTER KEY
@@ -61,6 +73,48 @@ const Analyzer = () => {
     setResult(scan);
     setStatus(scan.status);
     setProgress(scan.progress || 100);
+  };
+
+  const handleDownloadPDF = () => {
+    if (!result?.report) return;
+
+    // Create a new PDF document
+    const doc = new jsPDF();
+
+    // Set up standard margins and fonts
+    const margin = 15;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const maxTextWidth = pageWidth - margin * 2;
+
+    // 1. Add Header / Title
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(0, 200, 150); // A cyan-like color to match your theme
+    doc.text("CyberVision Security Report", margin, 20);
+
+    // 2. Add Timestamp
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    const dateStr = new Date().toLocaleString();
+    doc.text(`Generated on: ${dateStr}`, margin, 28);
+
+    // 3. Add Line Separator
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, 32, pageWidth - margin, 32);
+
+    // 4. Add the actual AI Report Content
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0); // Black text for readability
+
+    // This splits the long text into an array of lines that fit within the PDF width
+    const splitReportText = doc.splitTextToSize(result.report, maxTextWidth);
+
+    // Print the text starting at Y = 40
+    doc.text(splitReportText, margin, 40);
+
+    // 5. Trigger the download
+    doc.save("Scan_Report.pdf");
   };
 
   useEffect(() => {
@@ -96,7 +150,7 @@ const Analyzer = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [targetId, isScanning]);
+  }, [targetId, isScanning, setProgress, setResult, setStatus]);
 
   // 📌 STICKY LOGIC (based on progress position)
   useEffect(() => {
@@ -273,18 +327,55 @@ const Analyzer = () => {
           </div>
         )}
 
+        {/* 🔹 AI REPORT SECTION */}
         {result?.report && (
-          <div className="bg-[#121821] border border-[#1F2937] p-4 rounded-md mt-6">
-            <h2 className="text-sm text-gray-400 mb-3 uppercase tracking-wide">
-              AI Security Report
-            </h2>
+          <div className="bg-[#121821] border border-[#1F2937] p-4 rounded-md mt-6 flex justify-between items-center">
+            <div>
+              <h2 className="text-sm text-gray-400 uppercase tracking-wide">
+                AI Security Report
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                A detailed AI-generated breakdown of the scan results.
+              </p>
+            </div>
 
-            <pre className="text-xs text-gray-300 whitespace-pre-wrap">
-              {result.report}
-            </pre>
+            <button
+              onClick={() => setIsReportOpen(true)}
+              className="bg-[#00FF9F] text-black px-4 py-2 rounded text-sm hover:opacity-80 transition font-semibold flex items-center gap-2 cursor-pointer"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+              View AI Report
+            </button>
           </div>
         )}
       </div>
+
+      {/* 🔹 REPORT VIEWER MODAL */}
+      {isReportOpen && result?.report && (
+        <ReportViewer
+          reportContent={result.report}
+          onClose={() => setIsReportOpen(false)}
+          onDownload={handleDownloadPDF}
+        />
+      )}
     </div>
   );
 };
