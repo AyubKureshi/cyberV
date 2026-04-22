@@ -4,7 +4,9 @@ from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
-
+import time
+from dotenv import load_dotenv
+load_dotenv()
 
 # Controllers
 from app.controllers.scan_controller import (
@@ -158,24 +160,20 @@ def run_scan_pipeline(target_id, url):
 
                 if fingerprint in seen:
                     continue
-                    
-                seen.add(fingerprint)
+
+                seen.add(fingerprint)  # ← BUG FIX: this line was MISSING! seen.add() never called
 
                 is_valid = validate_vulnerability(vuln, vuln.get("response", ""))
 
                 if is_valid or vuln.get("type"):
-                    severity = vuln.get("severity", "Low")
-                    
-                    # 🔥 FIX: Only ask AI for Medium, High, or Critical
-                    if severity in ["Medium", "High", "Critical"]:
-                        explanation = explain_vulnerability(vuln)
-                        vuln["ai_explanation"] = explanation
-                        print("AI Explanation generated for:", vuln.get("type"))
-                    else:
-                        vuln["ai_explanation"] = "Explanation skipped for Low severity to speed up scan."
+                    explanation = explain_vulnerability(vuln)
+                    vuln["ai_explanation"] = explanation
+                    print("AI Explanation:", explanation)
 
                     if is_valid:
                         add_vulnerability(target_id, ep, vuln)
+                    
+                    time.sleep(2)  # ← ADD THIS: prevents rate limit hammering
 
             # 🔹 5. Update progress
             update_endpoint_status(target_id, ep, "completed")

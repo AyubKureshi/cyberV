@@ -58,7 +58,7 @@ const InfoGathering = () => {
 
       {infoData && (
         <button
-          onClick={() => navigate("/analyzer", { state: { infoUrl } })}
+          onClick={() => navigate("/analyzer", { state: { url: infoUrl } })}
           className="bg-[#00FF9F] text-black px-4 py-2 rounded text-sm hover:opacity-90 transition cursor-pointer"
         >
           Start Scan

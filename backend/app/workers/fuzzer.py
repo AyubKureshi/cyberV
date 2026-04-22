@@ -1,6 +1,7 @@
 import requests
+import os
 
-WORDLIST_PATH = "app/wordlists/params.txt"
+WORDLIST_PATH = os.path.join(os.path.dirname(__file__), "../wordlists/params.txt")
 
 
 def load_wordlist():
